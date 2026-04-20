@@ -54,11 +54,13 @@ if archivo:
         total_sin = total_filas - total_con
 
         with col2:
-            # Fijamos el tamaño de la figura (5x5 pulgadas) para que no varíe
-            fig, ax = plt.subplots(figsize=(5, 5))
+            # Creamos la figura con un tamaño fijo
+            fig, ax = plt.subplots(figsize=(6, 6))
             
+            # Ajustamos los márgenes para que el contenido no se mueva
+            plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
+
             if desglosar and len(palabras_limpias) > 1:
-                # 1. Contamos apariciones individuales
                 conteos_individuales = []
                 for p in palabras_limpias:
                     count = df['_texto_limpio'].str.contains(p, na=False).sum()
@@ -67,28 +69,29 @@ if archivo:
                 labels = palabras_lista_original + ['Otros / Sin datos']
                 sizes = conteos_individuales + [total_sin]
                 
-                # 2. Generamos colores para las categorías y forzamos GRIS para el último
-                # Usamos un mapa de colores (ej: 'summer' o 'viridis') para las categorías
-                cmap = plt.get_cmap('tab10') 
-                colors = [cmap(i) for i in range(len(palabras_limpias))] 
-                colors.append('#E0E0E0')  # Agregamos el gris al final
+                # Paleta de colores + Gris al final
+                cmap = plt.get_cmap('tab10')
+                colors = [cmap(i) for i in range(len(palabras_limpias))]
+                colors.append('#E0E0E0')
                 
-                ax.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors, startangle=140)
+                # El parámetro radius=1 mantiene el círculo siempre del mismo tamaño
+                ax.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors, 
+                       startangle=140, radius=1, pctdistance=0.85)
                 ax.set_title("Desglose Detallado")
             else:
-                # Gráfico original
                 etiqueta_general = ", ".join(palabras_lista_original)
                 labels = [f'Con "{etiqueta_general}"', 'Otros / Sin datos']
                 sizes = [total_con, total_sin]
-                colors = ['#4CAF50', '#E0E0E0'] # Verde y Gris
+                colors = ['#4CAF50', '#E0E0E0']
                 
                 if total_con > 0:
-                    ax.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors, startangle=140)
+                    ax.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors, 
+                           startangle=140, radius=1)
                 else:
-                    ax.text(0.5, 0.5, "Sin coincidencias", ha='center', va='center', fontsize=12)
-                ax.set_title(f'Distribución General')
+                    ax.text(0.5, 0.5, "Sin coincidencias", ha='center', va='center')
+                ax.set_title("Distribución General")
 
-            # Ajuste para que el gráfico sea un círculo perfecto y no se deforme
+            # Forzamos que sea un círculo y dibujamos
             ax.axis('equal') 
             st.pyplot(fig)
 

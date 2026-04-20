@@ -31,32 +31,58 @@ if archivo:
     with col1:
         columna_objetivo = st.selectbox("Selecciona la columna a analizar", df.columns)
         palabras_input = st.text_input("Palabra(s) clave — separadas por coma (ej: futbol, tenis)", "")
+        
+        # Nueva lógica para el checkbox de desglose
+        desglosar = False
+        if "," in palabras_input:
+            desglosar = st.checkbox("🔍 Desglosar porcentaje por cada palabra clave")
 
     if palabras_input:
-        palabras = [limpiar_texto(p) for p in palabras_input.split(",") if p.strip()]
+        # Extraemos las palabras originales para las etiquetas y las limpias para la búsqueda
+        palabras_lista_original = [p.strip() for p in palabras_input.split(",") if p.strip()]
+        palabras_limpias = [limpiar_texto(p) for p in palabras_lista_original]
 
         df['_texto_limpio'] = df[columna_objetivo].apply(limpiar_texto)
 
+        # Máscara global (Cualquiera de las palabras)
         coincidencias_mask = df['_texto_limpio'].apply(
-            lambda celda: any(p in celda for p in palabras)
+            lambda celda: any(p in celda for p in palabras_limpias)
         )
 
         total_con = int(coincidencias_mask.sum())
         total_filas = len(df)
         total_sin = total_filas - total_con
 
-        etiqueta = ", ".join(palabras_input.split(","))
-
         with col2:
             fig, ax = plt.subplots()
-            labels = [f'Con "{etiqueta}"', 'Otros / Sin datos']
-            sizes = [total_con, total_sin]
-            colors = ['#4CAF50', '#E0E0E0']
-            if total_con > 0:
-                ax.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors, startangle=140)
+            
+            if desglosar and len(palabras_limpias) > 1:
+                # Contamos cuántas veces aparece cada palabra individualmente
+                conteos_individuales = []
+                for p in palabras_limpias:
+                    count = df['_texto_limpio'].str.contains(p, na=False).sum()
+                    conteos_individuales.append(count)
+                
+                labels = palabras_lista_original + ['Otros / Sin datos']
+                sizes = conteos_individuales + [total_sin]
+                # Generamos una paleta de colores verdes/azules para las categorías y gris para el resto
+                colors = plt.cm.Paired(range(len(palabras_limpias))) 
+                
+                ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
+                ax.set_title("Desglose Detallado por Disciplina")
             else:
-                ax.text(0.5, 0.5, "Sin coincidencias", ha='center', va='center', fontsize=14)
-            ax.set_title(f'Distribución: "{etiqueta}"')
+                # Gráfico original (Vista general)
+                etiqueta_general = ", ".join(palabras_lista_original)
+                labels = [f'Con "{etiqueta_general}"', 'Otros / Sin datos']
+                sizes = [total_con, total_sin]
+                colors = ['#4CAF50', '#E0E0E0']
+                
+                if total_con > 0:
+                    ax.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors, startangle=140)
+                else:
+                    ax.text(0.5, 0.5, "Sin coincidencias", ha='center', va='center', fontsize=14)
+                ax.set_title(f'Distribución General')
+
             st.pyplot(fig)
 
         st.subheader(f"Vista previa de coincidencias — {total_con} encontradas de {total_filas} filas")
@@ -64,8 +90,7 @@ if archivo:
         df_filtrado = df[coincidencias_mask].drop(columns=['_texto_limpio'], errors='ignore')
         st.dataframe(df_filtrado, use_container_width=True)
 
-        df.drop(columns=['_texto_limpio'], inplace=True, errors='ignore')
-
+        # Limpieza y preparación de reporte
         st.divider()
         st.subheader("📥 Descargar Informe")
 
@@ -88,3 +113,6 @@ if archivo:
             file_name=f"reporte_{nombre_archivo}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+        
+        # Eliminar columna temporal
+        df.drop(columns=['_texto_limpio'], inplace=True, errors='ignore')

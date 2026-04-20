@@ -54,10 +54,11 @@ if archivo:
         total_sin = total_filas - total_con
 
         with col2:
-            fig, ax = plt.subplots()
+            # Fijamos el tamaño de la figura (5x5 pulgadas) para que no varíe
+            fig, ax = plt.subplots(figsize=(5, 5))
             
             if desglosar and len(palabras_limpias) > 1:
-                # Contamos cuántas veces aparece cada palabra individualmente
+                # 1. Contamos apariciones individuales
                 conteos_individuales = []
                 for p in palabras_limpias:
                     count = df['_texto_limpio'].str.contains(p, na=False).sum()
@@ -65,24 +66,30 @@ if archivo:
                 
                 labels = palabras_lista_original + ['Otros / Sin datos']
                 sizes = conteos_individuales + [total_sin]
-                # Generamos una paleta de colores verdes/azules para las categorías y gris para el resto
-                colors = plt.cm.Paired(range(len(palabras_limpias))) 
                 
-                ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
-                ax.set_title("Desglose Detallado por Disciplina")
+                # 2. Generamos colores para las categorías y forzamos GRIS para el último
+                # Usamos un mapa de colores (ej: 'summer' o 'viridis') para las categorías
+                cmap = plt.get_cmap('tab10') 
+                colors = [cmap(i) for i in range(len(palabras_limpias))] 
+                colors.append('#E0E0E0')  # Agregamos el gris al final
+                
+                ax.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors, startangle=140)
+                ax.set_title("Desglose Detallado")
             else:
-                # Gráfico original (Vista general)
+                # Gráfico original
                 etiqueta_general = ", ".join(palabras_lista_original)
                 labels = [f'Con "{etiqueta_general}"', 'Otros / Sin datos']
                 sizes = [total_con, total_sin]
-                colors = ['#4CAF50', '#E0E0E0']
+                colors = ['#4CAF50', '#E0E0E0'] # Verde y Gris
                 
                 if total_con > 0:
                     ax.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors, startangle=140)
                 else:
-                    ax.text(0.5, 0.5, "Sin coincidencias", ha='center', va='center', fontsize=14)
+                    ax.text(0.5, 0.5, "Sin coincidencias", ha='center', va='center', fontsize=12)
                 ax.set_title(f'Distribución General')
 
+            # Ajuste para que el gráfico sea un círculo perfecto y no se deforme
+            ax.axis('equal') 
             st.pyplot(fig)
 
         st.subheader(f"Vista previa de coincidencias — {total_con} encontradas de {total_filas} filas")

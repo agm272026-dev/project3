@@ -31,7 +31,7 @@ if archivo:
     with col1:
         columna_objetivo = st.selectbox("Selecciona la columna a analizar", df.columns)
         palabras_input = st.text_input("Palabra(s) clave — separadas por coma (ej: futbol, tenis)", "")
-
+        
         # Nueva lógica para el checkbox de desglose
         desglosar = False
         if "," in palabras_input:
@@ -56,7 +56,7 @@ if archivo:
         with col2:
             # Creamos la figura con un tamaño fijo
             fig, ax = plt.subplots(figsize=(6, 6))
-
+            
             # Ajustamos los márgenes para que el contenido no se mueva
             plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
 
@@ -65,16 +65,15 @@ if archivo:
                 for p in palabras_limpias:
                     count = df['_texto_limpio'].str.contains(p, na=False).sum()
                     conteos_individuales.append(count)
-
+                
                 labels = palabras_lista_original + ['Otros / Sin datos']
                 sizes = conteos_individuales + [total_sin]
-
+                
                 # Paleta de colores + Gris al final
                 cmap = plt.get_cmap('tab10')
                 colors = [cmap(i) for i in range(len(palabras_limpias))]
-                colors.append('
-#E0E0E0')
-
+                colors.append('#E0E0E0')
+                
                 # El parámetro radius=1 mantiene el círculo siempre del mismo tamaño
                 ax.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors, 
                        startangle=140, radius=1, pctdistance=0.85)
@@ -83,10 +82,8 @@ if archivo:
                 etiqueta_general = ", ".join(palabras_lista_original)
                 labels = [f'Con "{etiqueta_general}"', 'Otros / Sin datos']
                 sizes = [total_con, total_sin]
-                colors = ['
-#4CAF50', '
-#E0E0E0']
-
+                colors = ['#4CAF50', '#E0E0E0']
+                
                 if total_con > 0:
                     ax.pie(sizes, labels=labels, autopct='%1.1f%%', colors=colors, 
                            startangle=140, radius=1)
@@ -126,6 +123,6 @@ if archivo:
             file_name=f"reporte_{nombre_archivo}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-
+        
         # Eliminar columna temporal
         df.drop(columns=['_texto_limpio'], inplace=True, errors='ignore')

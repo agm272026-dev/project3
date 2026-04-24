@@ -66,7 +66,7 @@ if archivo:
                     count = df['_texto_limpio'].str.contains(p, na=False).sum()
                     conteos_individuales.append(count)
                 
-                labels = palabras_lista_original + ['Otros / Sin datos']
+                labels = palabras_lista_original + ['Otros']
                 sizes = conteos_individuales + [total_sin]
                 
                 # Paleta de colores + Gris al final
